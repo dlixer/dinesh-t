@@ -1,0 +1,5 @@
+{
+  "name": "InstagrowaX",
+  "description": "A modern, visually appealing interface for InstagrowaX, featuring authentication flows, a payment screen, and a detailed analytics dashboard. Built with React, TypeScript, and Tailwind CSS, and includes an AI-powered automation assistant using the Gemini API.",
+  "requestFramePermissions": []
+}
