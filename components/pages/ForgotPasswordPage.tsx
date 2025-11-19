@@ -1,24 +1,29 @@
 import React, { useState } from 'react';
-// FIX: Rewriting import to fix potential tooling issues.
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 const ForgotPasswordPage: React.FC = () => {
+  const { resetPassword } = useAuth();
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
     setMessage('');
 
-    // Simulate successful password reset request
-    setTimeout(() => {
-        setMessage('If an account exists for this email, a reset link has been sent.');
-        setIsLoading(false);
-    }, 500);
+    const { error } = await resetPassword(email);
+
+    if (error) {
+      setError(error.message || 'Failed to send reset link');
+      setIsLoading(false);
+    } else {
+      setMessage('If an account exists for this email, a reset link has been sent.');
+      setIsLoading(false);
+    }
   };
 
 

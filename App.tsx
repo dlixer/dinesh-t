@@ -1,6 +1,6 @@
 import React from 'react';
-// FIX: Using HashRouter for compatibility with the preview environment.
 import { HashRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 import AuthLayout from './components/layouts/AuthLayout';
 import LoginPage from './components/pages/LoginPage';
@@ -19,26 +19,62 @@ import ContactsPage from './components/pages/ContactsPage';
 import ReferralPage from './components/pages/ReferralPage';
 import SettingsPage from './components/pages/SettingsPage';
 
-const AuthRoutes = () => (
-  <AuthLayout>
-    <Outlet />
-  </AuthLayout>
-);
+const AuthRoutes = () => {
+  const { user, loading } = useAuth();
 
-const DashboardRoutes = () => (
-  <DashboardLayout>
-    <Outlet />
-  </DashboardLayout>
-);
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
-const App: React.FC = () => {
+  return (
+    <AuthLayout>
+      <Outlet />
+    </AuthLayout>
+  );
+};
+
+const DashboardRoutes = () => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return (
+    <DashboardLayout>
+      <Outlet />
+    </DashboardLayout>
+  );
+};
+
+const AppRoutes: React.FC = () => {
   return (
     <Router>
       <Routes>
         <Route path="/" element={<Navigate to="/login" />} />
 
-        {/* Authentication Routes */}
         <Route element={<AuthRoutes />}>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
@@ -48,7 +84,6 @@ const App: React.FC = () => {
           <Route path="/paymentplan" element={<PaymentPlanPage />} />
         </Route>
 
-        {/* Dashboard Routes */}
         <Route element={<DashboardRoutes />}>
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/automations" element={<AutomationsPage />} />
@@ -60,6 +95,14 @@ const App: React.FC = () => {
         </Route>
       </Routes>
     </Router>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <AuthProvider>
+      <AppRoutes />
+    </AuthProvider>
   );
 };
 

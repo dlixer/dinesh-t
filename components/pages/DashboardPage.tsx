@@ -1,6 +1,6 @@
 import React from 'react';
-// FIX: Rewriting import to fix potential tooling issues.
 import { Link } from 'react-router-dom';
+import { useAnalytics } from '../../hooks/useAnalytics';
 import SparkleIcon from '../icons/SparkleIcon';
 import PlusIcon from '../icons/PlusIcon';
 import AutomationIcon from '../icons/AutomationIcon';
@@ -24,10 +24,17 @@ const StatCard: React.FC<{ title: string; value: string; description: string, ic
     </div>
 );
 
-const chartData = [];
-const recentActivities = [];
-
 const DashboardPage: React.FC = () => {
+  const { analytics, loading } = useAnalytics();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 fade-in-up">
       <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
@@ -38,18 +45,31 @@ const DashboardPage: React.FC = () => {
           </Link>
       </div>
 
-      {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <StatCard title="Active Automations" value="0" description="No running workflows" icon={<AutomationIcon className="w-6 h-6 text-purple-600" />} />
-          <StatCard title="Contacts Gathered" value="0" description="No contacts yet" icon={<ContactsIcon className="w-6 h-6 text-purple-600" />} />
-          <StatCard title="Story Replies Sent" value="0" description="No replies sent" icon={<StoryIcon className="w-6 h-6 text-purple-600" />} />
+          <StatCard
+            title="Active Automations"
+            value={analytics.activeAutomations.toString()}
+            description={analytics.activeAutomations === 0 ? "No running workflows" : "Running workflows"}
+            icon={<AutomationIcon className="w-6 h-6 text-purple-600" />}
+          />
+          <StatCard
+            title="Contacts Gathered"
+            value={analytics.contactsGathered.toString()}
+            description={analytics.contactsGathered === 0 ? "No contacts yet" : "Total contacts"}
+            icon={<ContactsIcon className="w-6 h-6 text-purple-600" />}
+          />
+          <StatCard
+            title="Story Replies Sent"
+            value={analytics.storyRepliesSent.toString()}
+            description={analytics.storyRepliesSent === 0 ? "No replies sent" : "Total replies"}
+            icon={<StoryIcon className="w-6 h-6 text-purple-600" />}
+          />
       </div>
 
-      {/* Analytics Chart */}
       <div className="bg-white p-6 rounded-xl border border-gray-200">
           <h3 className="text-lg font-semibold text-gray-800 mb-4">Contacts Growth</h3>
-          {chartData.length > 0 ? (
-            <AnalyticsChart data={chartData} />
+          {analytics.chartData.length > 0 ? (
+            <AnalyticsChart data={analytics.chartData} />
           ) : (
             <div className="flex items-center justify-center h-[300px] text-gray-500">
                 No analytics data available yet.
@@ -77,16 +97,15 @@ const DashboardPage: React.FC = () => {
         </div>
 
 
-        {/* Quick Links / Recent Activity */}
         <div className="bg-white p-6 rounded-xl border border-gray-200">
             <h3 className="text-lg font-semibold text-gray-800">Recent Activity</h3>
-            {recentActivities.length > 0 ? (
+            {analytics.recentActivities.length > 0 ? (
                 <ul className="mt-4 space-y-1 text-sm">
-                    {recentActivities.map((activity, index) => (
+                    {analytics.recentActivities.map((activity, index) => (
                         <li key={index} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50">
                             <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full">
-                                    <activity.icon className="w-4 h-4 text-gray-500" />
+                                    <AutomationIcon className="w-4 h-4 text-gray-500" />
                                 </div>
                                 <div>
                                     <p className="font-medium text-gray-700">{activity.text}</p>

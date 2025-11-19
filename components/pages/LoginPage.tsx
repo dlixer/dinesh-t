@@ -1,25 +1,30 @@
 import React, { useState } from 'react';
-// FIX: Rewriting import to fix potential tooling issues.
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import MailIcon from '../icons/MailIcon';
 import LockIcon from '../icons/LockIcon';
 
 const LoginPage: React.FC = () => {
     const navigate = useNavigate();
+    const { signIn } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
         setError('');
 
-        // Simulate successful login and redirect to the dashboard
-        setTimeout(() => {
+        const { error } = await signIn(email, password);
+
+        if (error) {
+            setError(error.message || 'Failed to sign in');
+            setIsLoading(false);
+        } else {
             navigate('/dashboard');
-        }, 500);
+        }
     };
 
   return (

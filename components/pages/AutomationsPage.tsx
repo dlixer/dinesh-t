@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-// FIX: Rewriting import to fix potential tooling issues.
 import { Link } from 'react-router-dom';
+import { useAutomations } from '../../hooks/useAutomations';
 import PlusIcon from '../icons/PlusIcon';
 import CommentIcon from '../icons/CommentIcon';
 import DirectMessageIcon from '../icons/DirectMessageIcon';
@@ -12,48 +12,51 @@ import DeleteConfirmationModal from '../common/DeleteConfirmationModal';
 import TrashIcon from '../icons/TrashIcon';
 
 
-const initialAutomations = [];
-
 const TriggerChip: React.FC<{ type: string }> = ({ type }) => {
     const triggerStyles: { [key: string]: { icon: React.FC<{ className?: string }>, color: string } } = {
-        'Comment': { icon: CommentIcon, color: 'bg-blue-100 text-blue-700' },
-        'New Follower': { icon: DirectMessageIcon, color: 'bg-green-100 text-green-700' },
-        'Story Mention': { icon: StoryIcon, color: 'bg-pink-100 text-pink-700' },
-        'DM': { icon: DirectMessageIcon, color: 'bg-yellow-100 text-yellow-700' },
-        'Mention': { icon: MentionIcon, color: 'bg-purple-100 text-purple-700' },
-        'Live': { icon: LiveIcon, color: 'bg-red-100 text-red-700' },
+        'comments': { icon: CommentIcon, color: 'bg-blue-100 text-blue-700' },
+        'dms': { icon: DirectMessageIcon, color: 'bg-yellow-100 text-yellow-700' },
+        'live': { icon: LiveIcon, color: 'bg-red-100 text-red-700' },
+        'story_replies': { icon: StoryIcon, color: 'bg-pink-100 text-pink-700' },
+        'story_mentions': { icon: MentionIcon, color: 'bg-purple-100 text-purple-700' },
     };
     const style = triggerStyles[type] || { icon: CommentIcon, color: 'bg-gray-100 text-gray-700' };
     const Icon = style.icon;
 
+    const displayName = type.replace('_', ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+
     return (
         <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-full ${style.color}`}>
             <Icon className="w-3.5 h-3.5" />
-            {type}
+            {displayName}
         </span>
     );
 };
 
 const AutomationsPage: React.FC = () => {
-    const [automations, setAutomations] = useState(initialAutomations);
-    const [openMenuId, setOpenMenuId] = useState<number | null>(null);
-    const [automationToDelete, setAutomationToDelete] = useState<{id: number, name: string} | null>(null);
+    const { automations, loading, deleteAutomation, toggleAutomation } = useAutomations();
+    const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+    const [automationToDelete, setAutomationToDelete] = useState<{id: string, name: string} | null>(null);
     const menuRef = useRef<HTMLDivElement>(null);
 
-    const handleToggleMenu = (id: number) => {
+    const handleToggleMenu = (id: string) => {
         setOpenMenuId(openMenuId === id ? null : id);
     };
 
-    const handleDeleteClick = (automation: {id: number, name: string}) => {
+    const handleDeleteClick = (automation: {id: string, name: string}) => {
         setAutomationToDelete(automation);
         setOpenMenuId(null);
     };
-    
-    const confirmDelete = () => {
+
+    const confirmDelete = async () => {
         if (automationToDelete) {
-          setAutomations(currentAutomations => currentAutomations.filter(a => a.id !== automationToDelete.id));
+          await deleteAutomation(automationToDelete.id);
           setAutomationToDelete(null);
         }
+    };
+
+    const handleToggleActive = async (id: string, isActive: boolean) => {
+        await toggleAutomation(id, isActive);
     };
     
     useEffect(() => {
@@ -68,9 +71,16 @@ const AutomationsPage: React.FC = () => {
         };
     }, []);
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+      </div>
+    );
+  }
+
   return (
     <>
-        {/* FIX: Removed p-6 to allow layout component to handle padding for consistency. */}
         <div className="space-y-6 fade-in-up">
         <div className="flex justify-between items-center">
             <h1 className="text-3xl font-bold text-gray-800">Automations</h1>
@@ -96,11 +106,17 @@ const AutomationsPage: React.FC = () => {
                     automations.map((auto) => (
                     <tr key={auto.id} className="hover:bg-gray-50">
                         <td className="p-4 font-medium text-gray-800 whitespace-nowrap">{auto.name}</td>
-                        <td className="p-4"><TriggerChip type={auto.trigger} /></td>
-                        <td className="p-4 text-gray-600">{auto.runs.toLocaleString()}</td>
+                        <td className="p-4"><TriggerChip type={auto.trigger_type} /></td>
+                        <td className="p-4 text-gray-600">{auto.runs_count.toLocaleString()}</td>
                         <td className="p-4">
                         <label htmlFor={`toggle-${auto.id}`} className="cursor-pointer relative inline-block">
-                            <input type="checkbox" id={`toggle-${auto.id}`} className="sr-only toggle-checkbox" defaultChecked={auto.status} />
+                            <input
+                              type="checkbox"
+                              id={`toggle-${auto.id}`}
+                              className="sr-only toggle-checkbox"
+                              checked={auto.is_active}
+                              onChange={(e) => handleToggleActive(auto.id, e.target.checked)}
+                            />
                             <div className="toggle-track w-10 h-6 bg-gray-300 rounded-full transition-colors"></div>
                             <div className="toggle-thumb absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform"></div>
                         </label>

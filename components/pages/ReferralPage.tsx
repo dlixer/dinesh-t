@@ -1,16 +1,26 @@
 import React, { useState } from 'react';
+import { useReferrals } from '../../hooks/useReferrals';
 import GiftIcon from '../icons/GiftIcon';
 import CopyIcon from '../icons/CopyIcon';
 
 const ReferralPage: React.FC = () => {
+  const { referralCode, stats, loading } = useReferrals();
   const [copied, setCopied] = useState(false);
-  const referralLink = "https://instagrowax.com/ref/your-code";
+  const referralLink = `https://instagrowax.com/ref/${referralCode}`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(referralLink);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 fade-in-up">
@@ -43,15 +53,15 @@ const ReferralPage: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
           <div className="bg-white p-6 rounded-xl border border-gray-200">
-              <p className="text-3xl font-bold text-purple-600">0</p>
+              <p className="text-3xl font-bold text-purple-600">{stats.signups}</p>
               <p className="text-sm font-medium text-gray-500 mt-1">Referral Signups</p>
           </div>
            <div className="bg-white p-6 rounded-xl border border-gray-200">
-              <p className="text-3xl font-bold text-purple-600">0</p>
+              <p className="text-3xl font-bold text-purple-600">{stats.conversions}</p>
               <p className="text-sm font-medium text-gray-500 mt-1">Successful Conversions</p>
           </div>
            <div className="bg-white p-6 rounded-xl border border-gray-200">
-              <p className="text-3xl font-bold text-purple-600">₹0</p>
+              <p className="text-3xl font-bold text-purple-600">₹{stats.earnings.toFixed(2)}</p>
               <p className="text-sm font-medium text-gray-500 mt-1">Total Earnings</p>
           </div>
       </div>

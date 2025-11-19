@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-// FIX: Rewriting import to fix potential tooling issues and adding useLocation.
-import { NavLink, Link, useLocation } from 'react-router-dom';
+import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import LogoIcon from '../icons/LogoIcon';
 import DashboardIcon from '../icons/DashboardIcon';
 import AutomationIcon from '../icons/AutomationIcon';
@@ -20,8 +20,10 @@ const navItems = [
 ];
 
 const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { profile, signOut } = useAuth();
   const [isProfileMenuOpen, setProfileMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Find the current page title
   const pageTitle = navItems.find(item => location.pathname.startsWith(item.path))?.name;
@@ -87,14 +89,21 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
                 <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
                     <UserIcon className="w-5 h-5" />
                 </div>
-                <span>Your Account</span>
+                <span>{profile?.first_name || 'Your Account'}</span>
                 <ChevronDownIcon className={`w-4 h-4 transition-transform ${isProfileMenuOpen ? 'rotate-180' : ''}`} />
                 </button>
                 {isProfileMenuOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 border border-gray-200">
                     <Link to="/settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onClick={() => setProfileMenuOpen(false)}>My Account</Link>
-                    {/* FIX: Using Link for SPA navigation instead of anchor tag with href. */}
-                    <Link to="/login" className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</Link>
+                    <button
+                      onClick={async () => {
+                        await signOut();
+                        navigate('/login');
+                      }}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Logout
+                    </button>
                 </div>
                 )}
             </div>

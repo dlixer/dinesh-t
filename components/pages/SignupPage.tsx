@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-// FIX: Rewriting import to fix potential tooling issues.
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 const MetaIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" className="w-6 h-6 text-blue-600">
@@ -10,6 +10,7 @@ const MetaIcon = () => (
 
 const SignupPage: React.FC = () => {
     const navigate = useNavigate();
+    const { signUp } = useAuth();
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
@@ -24,15 +25,25 @@ const SignupPage: React.FC = () => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleSignup = (e: React.FormEvent) => {
+    const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
         setError('');
 
-        // Simulate successful signup and redirect to the next step
-        setTimeout(() => {
+        const { error } = await signUp(
+            formData.email,
+            formData.password,
+            formData.firstName,
+            formData.lastName,
+            formData.phone
+        );
+
+        if (error) {
+            setError(error.message || 'Failed to create account');
+            setIsLoading(false);
+        } else {
             navigate('/connect/ig');
-        }, 500);
+        }
     };
 
   return (

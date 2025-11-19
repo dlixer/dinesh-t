@@ -1,17 +1,33 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useContacts } from '../../hooks/useContacts';
 import EllipsisVerticalIcon from '../icons/EllipsisVerticalIcon';
 
-const contacts = [];
-
 const ContactsPage: React.FC = () => {
+  const { contacts, loading } = useContacts();
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredContacts = contacts.filter(contact =>
+    contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    contact.instagram_username.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+      </div>
+    );
+  }
   return (
     <div className="space-y-6 fade-in-up">
       <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold text-gray-800">Contacts</h1>
           <div className="relative">
-              <input 
+              <input
                   type="search"
                   placeholder="Search contacts..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -33,20 +49,26 @@ const ContactsPage: React.FC = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {contacts.length > 0 ? (
-                contacts.map((contact) => (
+            {filteredContacts.length > 0 ? (
+                filteredContacts.map((contact) => (
                 <tr key={contact.id} className="hover:bg-gray-50">
                     <td className="p-4">
                         <div className="flex items-center gap-3">
-                            <img src={contact.avatar} alt={contact.name} className="w-10 h-10 rounded-full" />
+                            {contact.profile_picture_url ? (
+                              <img src={contact.profile_picture_url} alt={contact.name} className="w-10 h-10 rounded-full" />
+                            ) : (
+                              <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold">
+                                {contact.name.charAt(0).toUpperCase()}
+                              </div>
+                            )}
                             <div>
-                                <p className="font-medium text-gray-800">{contact.name}</p>
-                                <p className="text-sm text-purple-600 font-medium">{contact.handle}</p>
+                                <p className="font-medium text-gray-800">{contact.name || 'Unknown'}</p>
+                                <p className="text-sm text-purple-600 font-medium">@{contact.instagram_username}</p>
                             </div>
                         </div>
                     </td>
-                    <td className="p-4 text-gray-600">{contact.date}</td>
-                    <td className="p-4 text-gray-600">{contact.source}</td>
+                    <td className="p-4 text-gray-600">{new Date(contact.created_at).toLocaleDateString()}</td>
+                    <td className="p-4 text-gray-600">{contact.source || 'N/A'}</td>
                     <td className="p-4 text-right">
                         <button className="p-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-700">
                             <EllipsisVerticalIcon className="w-5 h-5" />
